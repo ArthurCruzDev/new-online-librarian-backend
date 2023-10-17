@@ -10,6 +10,7 @@ import (
 
 func main() {
 	config.LoadEnvVariables()
+	config.OpenDatabaseConnection()
 	r := gin.Default()
 
 	r.GET("/health", health.GetHealthCheck)
@@ -19,5 +20,5 @@ func main() {
 			"message": "pong",
 		})
 	})
-	r.Run(":" + config.Porta)
+	r.Run(":" + config.API_PORT)
 }
