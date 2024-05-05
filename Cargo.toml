@@ -1,0 +1,15 @@
+[package]
+name = "new-online-librarian-backend"
+version = "0.1.0"
+authors = ["Arthur Rodrigues Cruz <developer.arthur.cruz@gmail.com>"]
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+actix-web = "4"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[dev-dependencies]
+reqwest = "0.12"
