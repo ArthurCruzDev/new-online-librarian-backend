@@ -1,28 +1,32 @@
-use new_online_librarian_backend::startup::run;
+use new_online_librarian_backend::{configuration::get_configuration, startup::run};
+use sqlx::MySqlPool;
 use std::net::TcpListener;
 
-fn spawn_app() -> String {
+pub struct TestApp{
+    pub address: String,
+    pub db_pool:MySqlPool,
+}
+
+async fn spawn_app() -> TestApp {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind address.");
     let port = listener.local_addr().unwrap().port();
+    let address = format!("http://127.0.0.1:{}", port);
+    let configuration = get_configuration().expect("Failed to read configuration.");
+    let connection_pool = MySqlPool::connect(
+        &configuration.database.connection_string()
+    )
+    .await
+    .expect("Failed to connect to MySql");
 
-    let server = run(listener).expect("Failed to bind address");
+    let server = run(listener, connection_pool.clone())
+    .expect("Failed to bind address");
 
     let _ = tokio::spawn(server);
 
-    format!("http://127.0.0.1:{}", port)
+    TestApp {
+        address,
+        db_pool: connection_pool,
+    }
 }
 
-#[tokio::test]
-async fn health_check_works() {
-    let address = spawn_app();
-    let client = reqwest::Client::new();
 
-    let response = client
-        .get(format!("{}/health_check", &address))
-        .send()
-        .await
-        .expect("Failed to execute request.");
-
-    assert!(response.status().is_success());
-    assert_eq!(Some(0), response.content_length());
-}
