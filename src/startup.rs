@@ -4,6 +4,7 @@ use actix_web::{dev::Server, web, App, HttpServer};
 use sqlx::MySqlPool;
 use tracing_actix_web::TracingLogger;
 
+use crate::modules::users::usecases;
 use crate::routes::health_check::health_check;
 
 pub fn run(listener: TcpListener, db_pool: MySqlPool) -> Result<Server, std::io::Error> {
