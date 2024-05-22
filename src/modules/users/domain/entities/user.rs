@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-
 #[derive(Debug, Default)]
 pub struct User {
     pub id: Option<u64>,
