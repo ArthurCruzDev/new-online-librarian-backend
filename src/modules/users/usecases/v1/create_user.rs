@@ -2,6 +2,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
+use email_address::EmailAddress;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::modules::{
@@ -53,21 +54,50 @@ impl TryFrom<CreateUserDto> for User {
 
     fn try_from(dto: CreateUserDto) -> Result<Self, Self::Error> {
         let mut user = User::default();
-        let mut error = false;
+        let mut errors = false;
         let mut validations: HashMap<String, String> = HashMap::default();
         match dto.name {
-            Some(name) => user.name = name,
+            Some(name) => {
+                let candidate_name = name.trim();
+                if candidate_name.is_empty() {
+                    validations.insert(
+                        "name".to_string(),
+                        "Full name must not be empty".to_string(),
+                    );
+                    errors = true;
+                }
+                if candidate_name.len() <= 2 || candidate_name.split_whitespace().count() <= 1 {
+                    validations
+                        .insert("name".to_string(), "Full name must be informed".to_string());
+                    errors = true;
+                }
+            }
             None => {
                 validations.insert("name".to_string(), "Name not informed".to_string());
-                error = true;
+                errors = true;
             }
         }
 
         match dto.email {
-            Some(email) => user.email = email,
+            Some(email) => {
+                let candidate_email = email.trim();
+                if candidate_email.is_empty() {
+                    validations.insert("email".to_string(), "Email must not be empty".to_string());
+                    errors = true;
+                }
+                if EmailAddress::is_valid(candidate_email) {
+                    user.email = candidate_email.to_string();
+                } else {
+                    validations.insert(
+                        "email".to_string(),
+                        "informed email is not valid".to_string(),
+                    );
+                    errors = true;
+                }
+            }
             None => {
                 validations.insert("email".to_string(), "Email not informed".to_string());
-                error = true;
+                errors = true;
             }
         }
 
@@ -90,10 +120,10 @@ impl TryFrom<CreateUserDto> for User {
             }
             None => {
                 validations.insert("passoword".to_string(), "Password not informed".to_string());
-                error = true;
+                errors = true;
             }
         }
-        if error {
+        if errors {
             return Err(DetailedAPIError {
                 msg: "Request contains invalid data".to_string(),
                 code: 400,
