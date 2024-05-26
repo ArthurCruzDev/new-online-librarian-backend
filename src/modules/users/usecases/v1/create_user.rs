@@ -1,12 +1,13 @@
-use anyhow::{anyhow, bail};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::modules::{
-    shared::errors::api_error::APIError,
+    shared::errors::{
+        detailed_api_error::DetailedAPIError, simple_api_error::SimpleAPIError, APIError,
+    },
     users::{
         domain::{dtos::create_user_dto::CreateUserDto, entities::user::User},
         infra::repositories::{
@@ -33,34 +34,40 @@ impl CreateUserUseCaseV1<UserRepositoryMySQL> {
         let user = match User::try_from(create_user_dto) {
             Ok(converted_user) => converted_user,
             Err(e) => {
-                return Err(APIError::new(e.to_string(), 400));
+                return Err(APIError::DetailedAPIError(e));
             }
         };
 
         match self.user_repository.save(&user).await {
             Ok(t) => Ok(t),
-            Err(e) => Err(APIError::new(e.to_string(), 500)),
+            Err(e) => Err(APIError::SimpleAPIError(SimpleAPIError::new(
+                e.to_string(),
+                500,
+            ))),
         }
     }
 }
 
 impl TryFrom<CreateUserDto> for User {
-    type Error = anyhow::Error;
+    type Error = DetailedAPIError;
 
     fn try_from(dto: CreateUserDto) -> Result<Self, Self::Error> {
         let mut user = User::default();
-
+        let mut error = false;
+        let mut validations: HashMap<String, String> = HashMap::default();
         match dto.name {
             Some(name) => user.name = name,
             None => {
-                bail!("Name not informed");
+                validations.insert("name".to_string(), "Name not informed".to_string());
+                error = true;
             }
         }
 
         match dto.email {
             Some(email) => user.email = email,
             None => {
-                bail!("Email not informed");
+                validations.insert("email".to_string(), "Email not informed".to_string());
+                error = true;
             }
         }
 
@@ -73,15 +80,26 @@ impl TryFrom<CreateUserDto> for User {
                         user.password = hashed_password.to_string();
                     }
                     Err(e) => {
-                        anyhow!(e);
+                        return Err(DetailedAPIError {
+                            msg: e.to_string(),
+                            code: 500,
+                            field_validations: None,
+                        });
                     }
                 }
             }
             None => {
-                bail!("Password not informed");
+                validations.insert("passoword".to_string(), "Password not informed".to_string());
+                error = true;
             }
         }
-
+        if error {
+            return Err(DetailedAPIError {
+                msg: "Request contains invalid data".to_string(),
+                code: 400,
+                field_validations: Some(validations),
+            });
+        }
         Ok(user)
     }
 }

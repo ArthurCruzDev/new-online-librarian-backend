@@ -3,20 +3,20 @@ use std::{error::Error, fmt};
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
-pub struct APIError {
+pub struct SimpleAPIError {
     pub msg: String,
     pub code: u16,
 }
 
-impl APIError {
+impl SimpleAPIError {
     pub fn new(msg: String, code: u16) -> Self {
-        APIError { msg, code }
+        SimpleAPIError { msg, code }
     }
 }
 
-impl Error for APIError {}
+impl Error for SimpleAPIError {}
 
-impl fmt::Display for APIError {
+impl fmt::Display for SimpleAPIError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.msg)
     }

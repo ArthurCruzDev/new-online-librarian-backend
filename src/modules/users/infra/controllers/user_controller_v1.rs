@@ -1,9 +1,9 @@
 use crate::modules::users::{
-    domain::{dtos::create_user_dto::CreateUserDto, entities::user::User},
+    domain::dtos::create_user_dto::CreateUserDto,
     infra::repositories::user_repository_mysql::UserRepositoryMySQL,
     usecases::v1::create_user::CreateUserUseCaseV1,
 };
-use actix_web::{http::StatusCode, post, web, HttpResponse, HttpResponseBuilder, Scope};
+use actix_web::{post, web, HttpResponse, Scope};
 
 pub struct UserControllerV1 {
     create_user_usecase: CreateUserUseCaseV1<UserRepositoryMySQL>,
@@ -27,12 +27,12 @@ async fn create_user(
         .create_user(create_user_dto.0)
         .await
     {
-        Ok(user) => HttpResponse::Ok().body(format!("{}", user.id.unwrap_or(999))),
-        Err(error) => {
-            let status_code =
-                StatusCode::from_u16(error.code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-            HttpResponseBuilder::new(status_code).json(error)
-        }
+        Ok(user) => match user.id {
+            Some(id) => HttpResponse::Created().body(format!("{}", id)),
+            None => HttpResponse::InternalServerError()
+                .body("Failed to retrieve created user id".to_string()),
+        },
+        Err(error) => HttpResponse::from(error),
     }
 }
 
