@@ -5,6 +5,7 @@ use argon2::{
 use email_address::EmailAddress;
 use regex::Regex;
 use sha2::{Digest, Sha256};
+use sqlx::types::uuid::fmt::Simple;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::modules::{
@@ -42,8 +43,31 @@ impl CreateUserUseCaseV1<UserRepositoryMySQL> {
             }
         };
 
+        match self.user_repository.find_by_email(&user.email).await {
+            Ok(duplicated_email_user) => {
+                if duplicated_email_user.is_some() {
+                    return Err(APIError::SimpleAPIError(SimpleAPIError::new(
+                        "There is already an account with this e-mail".to_string(),
+                        409,
+                    )));
+                }
+            }
+            Err(error) => {
+                return Err(APIError::SimpleAPIError(SimpleAPIError {
+                    msg: error.to_string(),
+                    code: 500,
+                }))
+            }
+        }
+
         match self.user_repository.save(&user).await {
-            Ok(t) => Ok(t),
+            Ok(t) => match t {
+                Some(returned_user) => Ok(returned_user),
+                None => Err(APIError::SimpleAPIError(SimpleAPIError::new(
+                    "Failed to load created user info".to_string(),
+                    500,
+                ))),
+            },
             Err(e) => Err(APIError::SimpleAPIError(SimpleAPIError::new(
                 e.to_string(),
                 500,
