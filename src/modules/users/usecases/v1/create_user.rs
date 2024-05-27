@@ -3,6 +3,8 @@ use argon2::{
     Argon2,
 };
 use email_address::EmailAddress;
+use regex::Regex;
+use sha2::{Digest, Sha256};
 use std::{collections::HashMap, sync::Arc};
 
 use crate::modules::{
@@ -16,6 +18,7 @@ use crate::modules::{
         },
     },
 };
+use rand::Rng;
 
 pub struct CreateUserUseCaseV1<T>
 where
@@ -106,24 +109,55 @@ impl TryFrom<CreateUserDto> for User {
             Some(password) => {
                 let candidate_password = password.trim();
 
-                if candidate_password.is_empty(){
-                    validations.insert("password".to_string(), "Password must not be empty".to_string());
+                if candidate_password.is_empty() {
+                    validations.insert(
+                        "password".to_string(),
+                        "Password must not be empty".to_string(),
+                    );
                     errors = true;
                 }
 
                 if candidate_password.len() < 8 {
-                    validations.insert("password".to_string(), "Password must have at least 8 characters".to_string());
+                    validations.insert(
+                        "password".to_string(),
+                        "Password must have at least 8 characters".to_string(),
+                    );
                     errors = true;
                 }
 
-                if candidate_password.matches(char::is_uppercase).count() < 1{
-                    validations.insert("password".to_string(), "Password must have at least one uppercase character".to_string());
+                if candidate_password.matches(char::is_uppercase).count() < 1 {
+                    validations.insert(
+                        "password".to_string(),
+                        "Password must have at least one uppercase character".to_string(),
+                    );
                     errors = true;
                 }
 
                 if candidate_password.matches(char::is_numeric).count() < 1 {
-                    validations.insert("password".to_string(), "Password must have at least one number".to_string());
+                    validations.insert(
+                        "password".to_string(),
+                        "Password must have at least one number".to_string(),
+                    );
                     errors = true;
+                }
+
+                match Regex::new(r"[^\ssa-zA-Z0-9]") {
+                    Ok(reg) => {
+                        if !reg.is_match(candidate_password) {
+                            validations.insert(
+                                "password".to_string(),
+                                "Password must have at least one special character".to_string(),
+                            );
+                            errors = true;
+                        }
+                    }
+                    Err(error) => {
+                        return Err(DetailedAPIError {
+                            msg: error.to_string(),
+                            code: 500,
+                            field_validations: None,
+                        });
+                    }
                 }
 
                 let salt = SaltString::generate(&mut OsRng);
@@ -146,6 +180,12 @@ impl TryFrom<CreateUserDto> for User {
                 errors = true;
             }
         }
+
+        let mut hasher = Sha256::new();
+        let mut rng = rand::thread_rng();
+        hasher.update(rng.gen::<u64>().to_ne_bytes());
+        user.email_token = Some(format!("{:x}", hasher.finalize()));
+
         if errors {
             return Err(DetailedAPIError {
                 msg: "Request contains invalid data".to_string(),
