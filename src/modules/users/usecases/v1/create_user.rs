@@ -71,6 +71,7 @@ impl TryFrom<CreateUserDto> for User {
                         .insert("name".to_string(), "Full name must be informed".to_string());
                     errors = true;
                 }
+                user.name = candidate_name.to_string();
             }
             None => {
                 validations.insert("name".to_string(), "Name not informed".to_string());
@@ -103,9 +104,31 @@ impl TryFrom<CreateUserDto> for User {
 
         match dto.password {
             Some(password) => {
+                let candidate_password = password.trim();
+
+                if candidate_password.is_empty(){
+                    validations.insert("password".to_string(), "Password must not be empty".to_string());
+                    errors = true;
+                }
+
+                if candidate_password.len() < 8 {
+                    validations.insert("password".to_string(), "Password must have at least 8 characters".to_string());
+                    errors = true;
+                }
+
+                if candidate_password.matches(char::is_uppercase).count() < 1{
+                    validations.insert("password".to_string(), "Password must have at least one uppercase character".to_string());
+                    errors = true;
+                }
+
+                if candidate_password.matches(char::is_numeric).count() < 1 {
+                    validations.insert("password".to_string(), "Password must have at least one number".to_string());
+                    errors = true;
+                }
+
                 let salt = SaltString::generate(&mut OsRng);
                 let argon2 = Argon2::default();
-                match argon2.hash_password(password.as_bytes(), &salt) {
+                match argon2.hash_password(candidate_password.as_bytes(), &salt) {
                     Ok(hashed_password) => {
                         user.password = hashed_password.to_string();
                     }
