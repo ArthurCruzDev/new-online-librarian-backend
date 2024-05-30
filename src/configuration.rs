@@ -4,6 +4,12 @@ use secrecy::{ExposeSecret, Secret};
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application_port: u16,
+    pub token: TokenSettings,
+}
+#[derive(serde::Deserialize)]
+pub struct TokenSettings {
+    pub secret: String,
+    pub expiration_time: i64,
 }
 #[derive(serde::Deserialize)]
 pub struct DatabaseSettings {

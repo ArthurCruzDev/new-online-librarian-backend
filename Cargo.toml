@@ -26,6 +26,7 @@ email_address = "0.2.4"
 regex = "1.10.4"
 sha2 = "0.10.8"
 rand = "0.8.5"
+jsonwebtoken = "9.3.0"
 
 [dependencies.sqlx]
 version = "0"

@@ -4,6 +4,7 @@ use sqlx::MySqlPool;
 
 use super::user_repository::UserRepository;
 use crate::modules::users::domain::entities::user::User;
+#[derive(Clone)]
 pub struct UserRepositoryMySQL {
     connection: Arc<MySqlPool>,
 }
@@ -39,9 +40,7 @@ impl UserRepository for UserRepositoryMySQL {
                         match self.find_by_id(new_user_id).await {
                             Ok(user_option) => match user_option {
                                 Some(user) => Ok(Some(user)),
-                                None => {
-                                    return Ok(None);
-                                }
+                                None => Ok(None),
                             },
                             Err(error) => Err(error),
                         }

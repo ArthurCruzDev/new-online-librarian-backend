@@ -1,5 +1,5 @@
 use crate::modules::{
-    shared::errors::{simple_api_error::SimpleAPIError, APIError},
+    shared::errors::APIError,
     users::{
         domain::{
             dtos::{create_user_dto::CreateUserDto, created_user_dto::CreatedUserDto},
@@ -37,9 +37,7 @@ async fn create_user(
     match user_controller.create_user_usecase.create_user(user).await {
         Ok(user) => match CreatedUserDto::try_from(user) {
             Ok(created_user_dto) => HttpResponse::Created().json(web::Json(created_user_dto)),
-            Err(e) => {
-                return HttpResponse::from(APIError::SimpleAPIError(e));
-            }
+            Err(e) => HttpResponse::from(APIError::SimpleAPIError(e)),
         },
         Err(error) => HttpResponse::from(error),
     }

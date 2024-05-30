@@ -37,7 +37,8 @@ async fn spawn_app() -> TestApp {
             .await
             .expect("Failed to connect to MySql");
 
-    let server = run(listener, connection_pool.clone()).expect("Failed to bind address");
+    let server = run(listener, connection_pool.clone(), configuration.token)
+        .expect("Failed to bind address");
 
     let _ = tokio::spawn(server);
 
