@@ -1,8 +1,10 @@
-use crate::modules::users::domain::mappers::user_mapper;
 use crate::modules::{
-    shared::errors::APIError,
+    shared::errors::{simple_api_error::SimpleAPIError, APIError},
     users::{
-        domain::{dtos::create_user_dto::CreateUserDto, entities::user::User},
+        domain::{
+            dtos::{create_user_dto::CreateUserDto, created_user_dto::CreatedUserDto},
+            entities::user::User,
+        },
         infra::repositories::user_repository_mysql::UserRepositoryMySQL,
         usecases::v1::create_user::CreateUserUseCaseV1,
     },
@@ -33,10 +35,11 @@ async fn create_user(
         }
     };
     match user_controller.create_user_usecase.create_user(user).await {
-        Ok(user) => match user.id {
-            Some(id) => HttpResponse::Created().body(format!("{}", id)),
-            None => HttpResponse::InternalServerError()
-                .body("Failed to retrieve created user id".to_string()),
+        Ok(user) => match CreatedUserDto::try_from(user) {
+            Ok(created_user_dto) => HttpResponse::Created().json(web::Json(created_user_dto)),
+            Err(e) => {
+                return HttpResponse::from(APIError::SimpleAPIError(e));
+            }
         },
         Err(error) => HttpResponse::from(error),
     }
