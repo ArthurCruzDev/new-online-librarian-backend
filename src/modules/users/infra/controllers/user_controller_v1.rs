@@ -1,13 +1,16 @@
-use crate::modules::{
-    shared::errors::APIError,
-    users::{
-        domain::{
-            dtos::{create_user_dto::CreateUserDto, created_user_dto::CreatedUserDto},
-            entities::user::User,
+use crate::{
+    modules::{
+        shared::errors::APIError,
+        users::{
+            domain::{
+                dtos::{create_user_dto::CreateUserDto, created_user_dto::CreatedUserDto},
+                entities::user::User,
+            },
+            infra::repositories::user_repository_mysql::UserRepositoryMySQL,
+            usecases::v1::create_user::CreateUserUseCaseV1,
         },
-        infra::repositories::user_repository_mysql::UserRepositoryMySQL,
-        usecases::v1::create_user::CreateUserUseCaseV1,
     },
+    startup::AuthedUser,
 };
 use actix_web::{post, web, HttpResponse, Scope};
 
@@ -27,6 +30,7 @@ impl UserControllerV1 {
 async fn create_user(
     user_controller: web::Data<UserControllerV1>,
     create_user_dto: web::Json<CreateUserDto>,
+    _user: AuthedUser,
 ) -> HttpResponse {
     let user = match User::try_from(create_user_dto.0) {
         Ok(converted_user) => converted_user,

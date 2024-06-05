@@ -75,7 +75,18 @@ impl LoginUserUseCaseV1<UserRepositoryMySQL> {
                 let expiration_time =
                     chrono::offset::Utc::now() + Duration::seconds(token_settings.expiration_time);
 
+                let user_id = match user_from_db.id {
+                    Some(id) => id,
+                    None => {
+                        return Err(APIError::SimpleAPIError(SimpleAPIError::new(
+                            "User id not found".to_string(),
+                            500,
+                        )));
+                    }
+                };
+
                 let claims_dto = ClaimsDto {
+                    id: user_id,
                     exp: expiration_time.timestamp(),
                 };
 

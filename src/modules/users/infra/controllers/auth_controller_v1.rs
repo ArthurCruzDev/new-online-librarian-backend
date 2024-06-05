@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     configuration::TokenSettings,
     modules::{
@@ -12,12 +14,12 @@ use crate::{
 use actix_web::{post, web, HttpResponse, Scope};
 
 pub struct AuthControllerV1 {
-    token_settings: TokenSettings,
+    token_settings: Arc<TokenSettings>,
     login_user_usecase: LoginUserUseCaseV1<UserRepositoryMySQL>,
 }
 
 impl AuthControllerV1 {
-    pub fn new(user_repository: UserRepositoryMySQL, token_settings: TokenSettings) -> Self {
+    pub fn new(user_repository: UserRepositoryMySQL, token_settings: Arc<TokenSettings>) -> Self {
         AuthControllerV1 {
             token_settings,
             login_user_usecase: LoginUserUseCaseV1::new(user_repository),

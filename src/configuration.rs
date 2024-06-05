@@ -6,7 +6,7 @@ pub struct Settings {
     pub application_port: u16,
     pub token: TokenSettings,
 }
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Default, Clone)]
 pub struct TokenSettings {
     pub secret: String,
     pub expiration_time: i64,
