@@ -11,7 +11,7 @@ use crate::modules::{
         usecases::v1::{
             create_location_usecase::CreateLocationUseCaseV1,
             delete_location_usecase::DeleteLocationUseCaseV1,
-            find_all_location_from_user_usecase::{self, FindAllLocationFromUserUseCaseV1},
+            find_all_location_from_user_usecase::FindAllLocationFromUserUseCaseV1,
         },
     },
     shared::errors::{simple_api_error::SimpleAPIError, APIError},
