@@ -59,7 +59,7 @@ async fn get_user(
     if authed_user.id.is_none() {
         return HttpResponse::from(APIError::SimpleAPIError(SimpleAPIError::new(
             "This action requires authentication".to_string(),
-            403,
+            401,
         )));
     }
 

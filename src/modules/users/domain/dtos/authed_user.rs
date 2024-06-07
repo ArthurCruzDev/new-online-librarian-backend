@@ -46,7 +46,7 @@ impl FromRequest for AuthedUser {
         ) {
             Ok(token_data) => token_data.claims.id,
             Err(err) => {
-                info!("{}", err);
+                error!("{}", err);
                 return ok(AuthedUser { id: None });
             }
         };

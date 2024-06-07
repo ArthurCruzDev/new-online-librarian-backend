@@ -48,6 +48,6 @@ async fn login_user(
     }
 }
 
-pub fn get_user_scope() -> Scope {
+pub fn get_auth_scope() -> Scope {
     web::scope("/v1/auth").service(login_user)
 }
