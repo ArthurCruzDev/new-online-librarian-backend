@@ -3,7 +3,7 @@ use std::sync::Arc;
 use actix_web::{http::header, Error, FromRequest, HttpRequest};
 use futures_util::future::{ok, Ready};
 use jsonwebtoken::{decode, DecodingKey, Validation};
-use tracing_log::log::{error, info};
+use tracing_log::log::error;
 
 use crate::configuration::TokenSettings;
 

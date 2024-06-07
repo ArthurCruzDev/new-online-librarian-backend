@@ -106,7 +106,27 @@ impl LocationRepository for LocationRepositoryMySQL {
     }
 
     async fn find_all_by_user_id(&self, user_id: u64) -> Result<Vec<Location>, sqlx::Error> {
-        todo!()
+        let query_result = sqlx::query!(
+            r#"
+            SELECT *
+            FROM locations u
+            WHERE u.user_id = ?
+            "#,
+            user_id,
+        )
+        .fetch_all(self.connection.as_ref())
+        .await;
+        match query_result {
+            Ok(result) => Ok(result
+                .into_iter()
+                .map(|item| Location {
+                    id: Some(item.id),
+                    name: item.name,
+                    user_id: item.user_id,
+                })
+                .collect()),
+            Err(error) => Err(error),
+        }
     }
 
     async fn delete_by_id(&self, id: u64) -> Result<(), sqlx::Error> {

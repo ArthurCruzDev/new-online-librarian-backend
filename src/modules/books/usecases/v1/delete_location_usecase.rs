@@ -1,12 +1,8 @@
 use std::sync::Arc;
 
 use crate::modules::{
-    books::{
-        domain::entities::location::Location,
-        infra::repositories::{
-            location_repository::LocationRepository,
-            location_repository_mysql::LocationRepositoryMySQL,
-        },
+    books::infra::repositories::{
+        location_repository::LocationRepository, location_repository_mysql::LocationRepositoryMySQL,
     },
     shared::errors::{simple_api_error::SimpleAPIError, APIError},
 };
