@@ -2,21 +2,26 @@ use crate::modules::{
     books::{
         domain::{dtos::create_location_dto::CreateLocationDto, entities::location::Location},
         infra::repositories::location_repository_mysql::LocationRepositoryMySQL,
-        usecases::v1::create_location_usecase::CreateLocationUseCaseV1,
+        usecases::v1::{
+            create_location_usecase::CreateLocationUseCaseV1,
+            delete_location_usecase::DeleteLocationUseCaseV1,
+        },
     },
     shared::errors::{simple_api_error::SimpleAPIError, APIError},
     users::domain::dtos::authed_user::AuthedUser,
 };
-use actix_web::{post, web, HttpResponse, Scope};
+use actix_web::{body::BoxBody, delete, post, web, HttpResponse, Scope};
 
 pub struct LocationControllerV1 {
     create_location_usecase: CreateLocationUseCaseV1<LocationRepositoryMySQL>,
+    delete_location_usecase: DeleteLocationUseCaseV1<LocationRepositoryMySQL>,
 }
 
 impl LocationControllerV1 {
     pub fn new(location_repository: LocationRepositoryMySQL) -> Self {
         LocationControllerV1 {
             create_location_usecase: CreateLocationUseCaseV1::new(location_repository.clone()),
+            delete_location_usecase: DeleteLocationUseCaseV1::new(location_repository.clone()),
         }
     }
 }
@@ -69,13 +74,13 @@ async fn create_location(
 //     if authed_location.id.is_none() {
 //         return HttpResponse::from(APIError::SimpleAPIError(SimpleAPIError::new(
 //             "This action requires authentication".to_string(),
-//             403,
+//             401,
 //         )));
 //     }
 
 //     if authed_location.id.is_some_and(|id| id != path_location_id) {
 //         return HttpResponse::from(APIError::SimpleAPIError(SimpleAPIError::new(
-//             "Location doesn't have permission to access this resource".to_string(),
+//             "User doesn't have permission to access this resource".to_string(),
 //             403,
 //         )));
 //     }
@@ -95,7 +100,34 @@ async fn create_location(
 //     }
 // }
 
+#[delete("/{location_id}")]
+async fn delete_location(
+    location_controller: web::Data<LocationControllerV1>,
+    path_variables: web::Path<u64>,
+    authed_user: AuthedUser,
+) -> HttpResponse {
+    let path_location_id = path_variables.into_inner();
+
+    if authed_user.id.is_none() {
+        return HttpResponse::from(APIError::SimpleAPIError(SimpleAPIError::new(
+            "This action requires authentication".to_string(),
+            401,
+        )));
+    }
+
+    match location_controller
+        .delete_location_usecase
+        .delete_location(path_location_id, authed_user.id.unwrap())
+        .await
+    {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(error) => HttpResponse::from(error),
+    }
+}
+
 pub fn get_location_scope() -> Scope {
-    web::scope("/v1/locations").service(create_location)
+    web::scope("/v1/locations")
+        .service(create_location)
+        .service(delete_location)
     // .service(get_location)
 }

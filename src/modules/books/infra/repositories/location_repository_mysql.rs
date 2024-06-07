@@ -110,6 +110,22 @@ impl LocationRepository for LocationRepositoryMySQL {
     }
 
     async fn delete_by_id(&self, id: u64) -> Result<(), sqlx::Error> {
-        todo!()
+        let query_result = sqlx::query!(
+            r#"
+            DELETE
+            FROM locations u
+            WHERE u.id = ?
+            "#,
+            id,
+        )
+        .execute(self.connection.as_ref())
+        .await;
+        match query_result {
+            Ok(_result) => Ok(()),
+            Err(error) => match error {
+                sqlx::Error::RowNotFound => Ok(()),
+                _ => Err(error),
+            },
+        }
     }
 }
