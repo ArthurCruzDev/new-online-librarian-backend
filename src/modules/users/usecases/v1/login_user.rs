@@ -54,7 +54,7 @@ impl LoginUserUseCaseV1<UserRepositoryMySQL> {
             None => {
                 return Err(APIError::SimpleAPIError(SimpleAPIError::new(
                     "Invalid credentials".to_string(),
-                    403,
+                    401,
                 )));
             }
         };
