@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Deserialize, Serialize)]
-pub struct Language {
-    pub name: String,
+pub struct LanguageDto {
+    pub name: Option<String>,
     pub code: Option<String>,
 }
