@@ -1,7 +1,7 @@
 use sqlx::MySqlPool;
 use std::sync::Arc;
 
-use crate::modules::books::domain::entities::book::Book;
+use crate::modules::books::domain::entities::{book::Book, genre::Genre};
 
 use super::book_repository::BookRepository;
 
@@ -25,7 +25,7 @@ impl BookRepository for BookRepositoryMySQL {
             None => {
                 let mut genres_string = String::new();
 
-                match book.genres {
+                match &book.genres {
                     Some(book_genres) => {
                         genres_string = serde_json::to_string(&book_genres).unwrap()
                     }
@@ -95,41 +95,30 @@ impl BookRepository for BookRepositoryMySQL {
         .fetch_one(self.connection.as_ref())
         .await;
         match query_result {
-            Ok(result) => Ok(Some(Book {
-                id: Some(result.id),
-                name: result.name,
-                user_id: result.user_id,
-            })),
-            Err(error) => match error {
-                sqlx::Error::RowNotFound => Ok(None),
-                _ => Err(error),
+            Ok(result) => {
+                let mut genres:Option<Vec<Genre>> = None;
+                match result.genres{
+                    Some(genre_value) => {
+                        genres = Some(serde_json::from_value(genre_value).unwrap());
+                    },
+                    None => {}
+                }
+                Ok(Some(Book {
+                    id: Some(result.id),
+                    title: result.title,
+                    authors: serde_json::from_value(result.authors).unwrap(),
+                    publisher: result.publisher,
+                    languages: serde_json::from_value(result.languages).unwrap(),
+                    edition: result.edition,
+                    isbn: result.isbn,
+                    year: result.year,
+                    genres,
+                    cover: result.cover,
+                    collection_id: result.collection_id,
+                    location_id: result.location_id,
+                    user_id: result.user_id,
+                }))
             },
-        }
-    }
-
-    async fn find_by_name_and_user_id(
-        &self,
-        name: &str,
-        user_id: u64,
-    ) -> Result<Option<Book>, sqlx::Error> {
-        let query_result = sqlx::query!(
-            r#"
-            SELECT *
-            FROM books u
-            WHERE u.user_id = ?
-                AND u.name = ?
-            "#,
-            user_id,
-            name
-        )
-        .fetch_one(self.connection.as_ref())
-        .await;
-        match query_result {
-            Ok(result) => Ok(Some(Book {
-                id: Some(result.id),
-                name: result.name,
-                user_id: result.user_id,
-            })),
             Err(error) => match error {
                 sqlx::Error::RowNotFound => Ok(None),
                 _ => Err(error),
