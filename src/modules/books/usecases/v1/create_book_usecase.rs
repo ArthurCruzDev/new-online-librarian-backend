@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::modules::{
     books::{
-        domain::entities::collection::Collection,
+        domain::entities::book::Book,
         infra::repositories::{
             book_repository::BookRepository, book_repository_mysql::BookRepositoryMySQL,
         },
@@ -24,13 +24,10 @@ impl CreateBookUseCaseV1<BookRepositoryMySQL> {
         }
     }
 
-    pub async fn create_book(
-        &self,
-        book_to_be_created: Collection,
-    ) -> Result<Collection, APIError> {
+    pub async fn create_book(&self, book_to_be_created: Book) -> Result<Book, APIError> {
         match self
             .book_repository
-            .find_by_name_and_user_id(&book_to_be_created.name, book_to_be_created.user_id)
+            .find_by_title(&book_to_be_created.title)
             .await
         {
             Ok(duplicated_book_name) => {

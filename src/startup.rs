@@ -4,17 +4,20 @@ use std::sync::Arc;
 use actix_cors::Cors;
 use actix_web::dev::Server;
 use actix_web::http::header;
+use actix_web::web::service;
 use actix_web::{web, App, HttpServer};
 use sqlx::MySqlPool;
 use tracing_actix_web::TracingLogger;
 
 use crate::configuration::TokenSettings;
+use crate::modules::books::infra::controllers::v1::book_controller_v1::{self, BookControllerV1};
 use crate::modules::books::infra::controllers::v1::collection_controller_v1::{
     self, CollectionControllerV1,
 };
 use crate::modules::books::infra::controllers::v1::location_controller_v1::{
     self, LocationControllerV1,
 };
+use crate::modules::books::infra::repositories::book_repository_mysql::BookRepositoryMySQL;
 use crate::modules::books::infra::repositories::collection_repository_mysql::CollectionRepositoryMySQL;
 use crate::modules::books::infra::repositories::location_repository_mysql::LocationRepositoryMySQL;
 use crate::modules::users::infra::controllers::v1::auth_controller_v1::{self, AuthControllerV1};
@@ -33,6 +36,7 @@ pub fn run(
     let user_repository = UserRepositoryMySQL::new(arc_db_pool.clone());
     let location_repository = LocationRepositoryMySQL::new(arc_db_pool.clone());
     let collection_repository = CollectionRepositoryMySQL::new(arc_db_pool.clone());
+    let book_repository = BookRepositoryMySQL::new(arc_db_pool.clone());
 
     let user_controller_v1 = web::Data::new(UserControllerV1::new(user_repository.clone()));
     let auth_controller_v1 = web::Data::new(AuthControllerV1::new(
@@ -43,6 +47,7 @@ pub fn run(
         web::Data::new(LocationControllerV1::new(location_repository.clone()));
     let collection_controller_v1 =
         web::Data::new(CollectionControllerV1::new(collection_repository.clone()));
+    let book_controller_v1 = web::Data::new(BookControllerV1::new(book_repository.clone()));
 
     let server = HttpServer::new(move || {
         let cors = Cors::default()
@@ -62,11 +67,13 @@ pub fn run(
             .service(auth_controller_v1::get_auth_scope())
             .service(location_controller_v1::get_location_scope())
             .service(collection_controller_v1::get_collection_scope())
+            .service(book_controller_v1::get_book_scope())
             .app_data(user_controller_v1.clone())
             .app_data(auth_controller_v1.clone())
             .app_data(collection_controller_v1.clone())
             .app_data(arc_token_settings.clone())
             .app_data(location_controller_v1.clone())
+            .app_data(book_controller_v1.clone())
     })
     .listen(listener)?
     .run();

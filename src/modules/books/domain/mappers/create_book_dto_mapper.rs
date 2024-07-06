@@ -127,6 +127,16 @@ impl TryFrom<CreateBookDto> for Book {
         book.cover = dto.cover;
         book.collection_id = dto.collection_id;
 
+        match dto.location_id {
+            Some(location_id) => book.location_id = location_id,
+            None => {
+                validations.insert(
+                    "location_id".to_string(),
+                    "Book must be at a location".to_string(),
+                );
+            }
+        }
+
         match dto.user_id {
             Some(user_id) => book.user_id = user_id,
             None => {
