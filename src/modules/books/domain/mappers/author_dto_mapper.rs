@@ -44,3 +44,12 @@ impl TryFrom<AuthorDto> for Author {
         Ok(author)
     }
 }
+
+impl From<Author> for AuthorDto {
+    fn from(entity: Author) -> Self {
+        AuthorDto {
+            name: Some(entity.name),
+            url: entity.url,
+        }
+    }
+}

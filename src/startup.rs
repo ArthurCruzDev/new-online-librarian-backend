@@ -47,7 +47,11 @@ pub fn run(
         web::Data::new(LocationControllerV1::new(location_repository.clone()));
     let collection_controller_v1 =
         web::Data::new(CollectionControllerV1::new(collection_repository.clone()));
-    let book_controller_v1 = web::Data::new(BookControllerV1::new(book_repository.clone()));
+    let book_controller_v1 = web::Data::new(BookControllerV1::new(
+        book_repository.clone(),
+        collection_repository.clone(),
+        location_repository.clone(),
+    ));
 
     let server = HttpServer::new(move || {
         let cors = Cors::default()

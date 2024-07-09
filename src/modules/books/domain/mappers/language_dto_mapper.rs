@@ -44,3 +44,12 @@ impl TryFrom<LanguageDto> for Language {
         Ok(language)
     }
 }
+
+impl From<Language> for LanguageDto {
+    fn from(entity: Language) -> Self {
+        LanguageDto {
+            name: Some(entity.name),
+            code: entity.code,
+        }
+    }
+}

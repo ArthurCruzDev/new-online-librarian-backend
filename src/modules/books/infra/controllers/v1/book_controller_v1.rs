@@ -1,7 +1,11 @@
 use crate::modules::{
     books::{
         domain::{dtos::create_book_dto::CreateBookDto, entities::book::Book},
-        infra::repositories::book_repository_mysql::BookRepositoryMySQL,
+        infra::repositories::{
+            book_repository_mysql::BookRepositoryMySQL, collection_repository,
+            collection_repository_mysql::CollectionRepositoryMySQL,
+            location_repository_mysql::LocationRepositoryMySQL,
+        },
         usecases::v1::create_book_usecase::CreateBookUseCaseV1,
     },
     shared::errors::{simple_api_error::SimpleAPIError, APIError},
@@ -10,13 +14,25 @@ use crate::modules::{
 use actix_web::{delete, get, post, web, HttpResponse, Scope};
 
 pub struct BookControllerV1 {
-    create_book_usecase: CreateBookUseCaseV1<BookRepositoryMySQL>,
+    create_book_usecase: CreateBookUseCaseV1<
+        BookRepositoryMySQL,
+        CollectionRepositoryMySQL,
+        LocationRepositoryMySQL,
+    >,
 }
 
 impl BookControllerV1 {
-    pub fn new(book_repository: BookRepositoryMySQL) -> Self {
+    pub fn new(
+        book_repository: BookRepositoryMySQL,
+        collection_repository: CollectionRepositoryMySQL,
+        location_repository: LocationRepositoryMySQL,
+    ) -> Self {
         BookControllerV1 {
-            create_book_usecase: CreateBookUseCaseV1::new(book_repository.clone()),
+            create_book_usecase: CreateBookUseCaseV1::new(
+                book_repository.clone(),
+                collection_repository.clone(),
+                location_repository.clone(),
+            ),
         }
     }
 }

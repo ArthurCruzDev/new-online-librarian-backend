@@ -45,3 +45,11 @@ impl TryFrom<GenreDto> for Genre {
         Ok(genre)
     }
 }
+
+impl From<Genre> for GenreDto {
+    fn from(entity: Genre) -> Self {
+        GenreDto {
+            name: Some(entity.name),
+        }
+    }
+}
