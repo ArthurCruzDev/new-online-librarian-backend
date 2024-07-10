@@ -102,7 +102,7 @@ async fn get_all_books_paginated(
         .find_all_from_user(authed_user.id.unwrap(), params.page, params.page_size)
         .await
     {
-        Ok(books_page) => HttpResponse::Created().json(web::Json(books_page)),
+        Ok(books_page) => HttpResponse::Ok().json(web::Json(books_page)),
         Err(error) => HttpResponse::from(error),
     }
 }
