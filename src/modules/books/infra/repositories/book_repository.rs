@@ -1,7 +1,10 @@
 use futures_util::Future;
 use sqlx::Error;
 
-use crate::modules::books::domain::entities::book::Book;
+use crate::modules::{
+    books::domain::{dtos::complete_book_dto::CompleteBookDto, entities::book::Book},
+    shared::domain::dtos::paginated_dto::PaginatedDto,
+};
 
 pub trait BookRepository {
     fn save(&self, location: &Book) -> impl Future<Output = Result<Option<Book>, Error>> + Send;
@@ -13,6 +16,8 @@ pub trait BookRepository {
     fn find_all_by_user_id(
         &self,
         user_id: u64,
-    ) -> impl Future<Output = Result<Vec<Book>, Error>> + Send;
+        page: u64,
+        page_size: u64,
+    ) -> impl Future<Output = Result<PaginatedDto<CompleteBookDto>, Error>> + Send;
     fn delete_by_id(&self, id: u64) -> impl Future<Output = Result<(), Error>> + Send;
 }

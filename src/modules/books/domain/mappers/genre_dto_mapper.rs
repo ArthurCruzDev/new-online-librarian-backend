@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 
 use crate::modules::{
-    books::domain::{
-        dtos::{author_dto::AuthorDto, genre_dto::GenreDto},
-        entities::genre::{self, Genre},
-    },
+    books::domain::{dtos::genre_dto::GenreDto, entities::genre::Genre},
     shared::errors::detailed_api_error::DetailedAPIError,
 };
 

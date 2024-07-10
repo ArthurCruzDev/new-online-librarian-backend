@@ -1,12 +1,7 @@
 use crate::modules::{
     books::domain::{
         dtos::create_book_dto::CreateBookDto,
-        entities::{
-            author::{self, Author},
-            book::Book,
-            genre::Genre,
-            language::Language,
-        },
+        entities::{author::Author, book::Book, genre::Genre, language::Language},
     },
     shared::errors::detailed_api_error::DetailedAPIError,
 };

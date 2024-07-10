@@ -38,15 +38,12 @@ impl TryFrom<Book> for CompleteBookDto {
         dto.edition = entity.edition;
         dto.isbn = entity.isbn;
         dto.year = entity.year;
-        match entity.genres {
-            Some(some_genres) => {
-                let mut genre_dto_vec = Vec::with_capacity(some_genres.len());
-                for genre_entity in some_genres.into_iter() {
-                    genre_dto_vec.push(GenreDto::from(genre_entity))
-                }
-                dto.genres = Some(genre_dto_vec);
+        if let Some(some_genres) = entity.genres {
+            let mut genre_dto_vec = Vec::with_capacity(some_genres.len());
+            for genre_entity in some_genres.into_iter() {
+                genre_dto_vec.push(GenreDto::from(genre_entity))
             }
-            None => {}
+            dto.genres = Some(genre_dto_vec);
         }
         dto.cover = entity.cover;
         dto.collection = None;

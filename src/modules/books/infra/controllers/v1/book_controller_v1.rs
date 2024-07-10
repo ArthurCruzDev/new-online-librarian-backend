@@ -2,16 +2,20 @@ use crate::modules::{
     books::{
         domain::{dtos::create_book_dto::CreateBookDto, entities::book::Book},
         infra::repositories::{
-            book_repository_mysql::BookRepositoryMySQL, collection_repository,
+            book_repository_mysql::BookRepositoryMySQL,
             collection_repository_mysql::CollectionRepositoryMySQL,
             location_repository_mysql::LocationRepositoryMySQL,
         },
-        usecases::v1::create_book_usecase::CreateBookUseCaseV1,
+        usecases::v1::{
+            create_book_usecase::CreateBookUseCaseV1,
+            find_all_books_from_user_usecase::FindAllBooksFromUserUseCaseV1,
+        },
     },
     shared::errors::{simple_api_error::SimpleAPIError, APIError},
     users::domain::dtos::authed_user::AuthedUser,
 };
-use actix_web::{delete, get, post, web, HttpResponse, Scope};
+use actix_web::{get, post, web, HttpResponse, Scope};
+use serde::Deserialize;
 
 pub struct BookControllerV1 {
     create_book_usecase: CreateBookUseCaseV1<
@@ -19,6 +23,7 @@ pub struct BookControllerV1 {
         CollectionRepositoryMySQL,
         LocationRepositoryMySQL,
     >,
+    get_all_books_from_user_usecase: FindAllBooksFromUserUseCaseV1<BookRepositoryMySQL>,
 }
 
 impl BookControllerV1 {
@@ -32,6 +37,9 @@ impl BookControllerV1 {
                 book_repository.clone(),
                 collection_repository.clone(),
                 location_repository.clone(),
+            ),
+            get_all_books_from_user_usecase: FindAllBooksFromUserUseCaseV1::new(
+                book_repository.clone(),
             ),
         }
     }
@@ -70,6 +78,37 @@ async fn create_book(
     }
 }
 
+#[derive(Deserialize)]
+pub struct GetAllBooksParams {
+    page: Option<i64>,
+    page_size: Option<i64>,
+}
+
+#[get("")]
+async fn get_all_books_paginated(
+    book_controller: web::Data<BookControllerV1>,
+    params: web::Query<GetAllBooksParams>,
+    authed_user: AuthedUser,
+) -> HttpResponse {
+    if authed_user.id.is_none() {
+        return HttpResponse::from(APIError::SimpleAPIError(SimpleAPIError::new(
+            "This action requires authentication".to_string(),
+            401,
+        )));
+    }
+
+    match book_controller
+        .get_all_books_from_user_usecase
+        .find_all_from_user(authed_user.id.unwrap(), params.page, params.page_size)
+        .await
+    {
+        Ok(books_page) => HttpResponse::Created().json(web::Json(books_page)),
+        Err(error) => HttpResponse::from(error),
+    }
+}
+
 pub fn get_book_scope() -> Scope {
-    web::scope("/v1/books").service(create_book)
+    web::scope("/v1/books")
+        .service(create_book)
+        .service(get_all_books_paginated)
 }

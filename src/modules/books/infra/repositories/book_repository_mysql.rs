@@ -1,7 +1,16 @@
 use sqlx::MySqlPool;
 use std::sync::Arc;
 
-use crate::modules::books::domain::entities::{book::Book, genre::Genre};
+use crate::modules::{
+    books::domain::{
+        dtos::{
+            collection_dto::CollectionDto, complete_book_dto::CompleteBookDto, genre_dto::GenreDto,
+            location_dto::LocationDto,
+        },
+        entities::{book::Book, genre::Genre},
+    },
+    shared::domain::dtos::paginated_dto::PaginatedDto,
+};
 
 use super::book_repository::BookRepository;
 
@@ -97,11 +106,8 @@ impl BookRepository for BookRepositoryMySQL {
         match query_result {
             Ok(result) => {
                 let mut genres: Option<Vec<Genre>> = None;
-                match result.genres {
-                    Some(genre_value) => {
-                        genres = Some(serde_json::from_value(genre_value).unwrap());
-                    }
-                    None => {}
+                if let Some(genre_value) = result.genres {
+                    genres = Some(serde_json::from_value(genre_value).unwrap());
                 }
                 Ok(Some(Book {
                     id: Some(result.id),
@@ -140,11 +146,8 @@ impl BookRepository for BookRepositoryMySQL {
         match query_result {
             Ok(result) => {
                 let mut genres: Option<Vec<Genre>> = None;
-                match result.genres {
-                    Some(genre_value) => {
-                        genres = Some(serde_json::from_value(genre_value).unwrap());
-                    }
-                    None => {}
+                if let Some(genre_value) = result.genres {
+                    genres = Some(serde_json::from_value(genre_value).unwrap());
                 }
                 Ok(Some(Book {
                     id: Some(result.id),
@@ -169,45 +172,117 @@ impl BookRepository for BookRepositoryMySQL {
         }
     }
 
-    async fn find_all_by_user_id(&self, user_id: u64) -> Result<Vec<Book>, sqlx::Error> {
-        let query_result = sqlx::query!(
+    async fn find_all_by_user_id(
+        &self,
+        user_id: u64,
+        page: u64,
+        page_size: u64,
+    ) -> Result<PaginatedDto<CompleteBookDto>, sqlx::Error> {
+        let couting_query_result = sqlx::query!(
             r#"
-            SELECT *
+            SELECT COUNT(*) as n_books
             FROM books u
             WHERE u.user_id = ?
             "#,
             user_id,
         )
+        .fetch_one(self.connection.as_ref())
+        .await;
+        let n_of_books: u64 = match couting_query_result {
+            Ok(counting_query_result_value) => {
+                u64::from_ne_bytes(counting_query_result_value.n_books.to_ne_bytes())
+            }
+            Err(e) => return Err(e),
+        };
+
+        let query_result = sqlx::query!(
+            r#"
+            SELECT 
+            b.id 'book_id',
+            b.title 'book_title',
+            b.authors 'book_authors',
+            b.publisher 'book_publisher',
+            b.languages 'book_languages',
+            b.edition 'book_edition',
+            b.isbn 'book_isbn',
+            b.year 'book_year',
+            b.genres 'book_genres',
+            b.cover 'book_cover',
+            b.user_id 'book_user_id',
+            l.id 'location_id',
+            l.name 'location_name',
+            l.user_id 'location_user_id',
+            c.id 'collection_id',
+            c.name 'collection_name',
+            c.user_id 'collection_user_id'
+            FROM books b
+                INNER JOIN ( 
+                    SELECT u.id
+                        FROM books u
+                        WHERE u.user_id = ?
+                        ORDER BY u.title ASC
+                        LIMIT ? OFFSET ?
+                ) as p USING (id)
+            INNER JOIN locations as l
+                ON l.id = b.location_id
+            LEFT JOIN collections as c
+                ON c.id = b.collection_id
+            "#,
+            user_id,
+            page_size,
+            (page - 1) * page_size
+        )
         .fetch_all(self.connection.as_ref())
         .await;
         match query_result {
-            Ok(result) => Ok(result
-                .into_iter()
-                .map(|item| {
-                    let mut genres: Option<Vec<Genre>> = None;
-                    match item.genres {
-                        Some(genre_value) => {
-                            genres = Some(serde_json::from_value(genre_value).unwrap());
+            Ok(result) => {
+                let items_vec = result
+                    .into_iter()
+                    .map(|item| {
+                        let mut genres: Option<Vec<GenreDto>> = None;
+                        if let Some(genre_value) = item.book_genres {
+                            let genre_vec: Vec<Genre> =
+                                serde_json::from_value(genre_value).unwrap();
+                            let genre_dto_vec: Vec<GenreDto> =
+                                genre_vec.into_iter().map(GenreDto::from).collect();
+                            genres = Some(genre_dto_vec);
                         }
-                        None => {}
-                    }
-                    Book {
-                        id: Some(item.id),
-                        title: item.title,
-                        authors: serde_json::from_value(item.authors).unwrap(),
-                        publisher: item.publisher,
-                        languages: serde_json::from_value(item.languages).unwrap(),
-                        edition: item.edition,
-                        isbn: item.isbn,
-                        year: item.year,
-                        genres,
-                        cover: item.cover,
-                        collection_id: item.collection_id,
-                        location_id: item.location_id,
-                        user_id: item.user_id,
-                    }
+                        let mut collection: Option<CollectionDto> = None;
+                        if item.collection_id.is_some() {
+                            collection = Some(CollectionDto {
+                                id: item.collection_id,
+                                name: item.collection_name.unwrap_or("".to_string()),
+                                user_id: item.collection_user_id.unwrap(),
+                            })
+                        }
+                        CompleteBookDto {
+                            id: item.book_id,
+                            title: item.book_title,
+                            authors: serde_json::from_value(item.book_authors).unwrap(),
+                            publisher: item.book_publisher,
+                            languages: serde_json::from_value(item.book_languages).unwrap(),
+                            edition: item.book_edition,
+                            isbn: item.book_isbn,
+                            year: item.book_year,
+                            genres,
+                            cover: item.book_cover,
+                            collection,
+                            location: LocationDto {
+                                id: Some(item.location_id),
+                                name: item.location_name,
+                                user_id: item.location_user_id,
+                            },
+                            user_id: item.book_user_id,
+                        }
+                    })
+                    .collect();
+                Ok(PaginatedDto {
+                    page,
+                    page_size,
+                    total_items: n_of_books,
+                    items: items_vec,
                 })
-                .collect()),
+            }
             Err(error) => Err(error),
         }
     }

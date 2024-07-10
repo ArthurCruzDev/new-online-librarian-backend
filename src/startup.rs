@@ -4,7 +4,6 @@ use std::sync::Arc;
 use actix_cors::Cors;
 use actix_web::dev::Server;
 use actix_web::http::header;
-use actix_web::web::service;
 use actix_web::{web, App, HttpServer};
 use sqlx::MySqlPool;
 use tracing_actix_web::TracingLogger;
