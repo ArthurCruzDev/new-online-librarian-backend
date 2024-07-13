@@ -7,7 +7,7 @@ use crate::modules::{
                 collection_dto::CollectionDto, complete_book_dto::CompleteBookDto,
                 location_dto::LocationDto,
             },
-            entities::book::Book,
+            entities::book::{self, Book},
         },
         infra::repositories::{
             book_repository::BookRepository, book_repository_mysql::BookRepositoryMySQL,
@@ -54,6 +54,29 @@ impl
         &self,
         book_to_be_created: Book,
     ) -> Result<CompleteBookDto, APIError> {
+        if book_to_be_created.id.is_some() {
+            match self
+                .book_repository
+                .find_by_id(book_to_be_created.id.unwrap())
+                .await
+            {
+                Ok(maybe_a_book) => {
+                    if maybe_a_book.is_none() {
+                        return Err(APIError::SimpleAPIError(SimpleAPIError::new(
+                            "Book not found".to_string(),
+                            404,
+                        )));
+                    }
+                }
+                Err(error) => {
+                    return Err(APIError::SimpleAPIError(SimpleAPIError {
+                        msg: error.to_string(),
+                        code: 500,
+                    }))
+                }
+            }
+        }
+
         match self
             .book_repository
             .find_by_title(&book_to_be_created.title)
@@ -120,6 +143,7 @@ impl
                 }))
             }
         }
+
         let saved_book;
 
         match self.book_repository.save(&book_to_be_created).await {
