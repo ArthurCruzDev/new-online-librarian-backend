@@ -24,5 +24,9 @@ pub trait BookRepository {
         user_id: u64,
         book_id: u64,
     ) -> impl Future<Output = Result<Option<CompleteBookDto>, Error>> + Send;
-    fn delete_by_id(&self, id: u64) -> impl Future<Output = Result<(), Error>> + Send;
+    fn delete_by_id(
+        &self,
+        user_id: u64,
+        book_id: u64,
+    ) -> impl Future<Output = Result<bool, Error>> + Send;
 }

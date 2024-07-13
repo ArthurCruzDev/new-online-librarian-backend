@@ -1,5 +1,6 @@
 use sqlx::MySqlPool;
 use std::sync::Arc;
+use tracing_log::log::info;
 
 use crate::modules::{
     books::domain::{
@@ -10,6 +11,7 @@ use crate::modules::{
         entities::{book::Book, genre::Genre},
     },
     shared::domain::dtos::paginated_dto::PaginatedDto,
+    users::domain::entities::user,
 };
 
 use super::book_repository::BookRepository;
@@ -70,7 +72,7 @@ impl BookRepository for BookRepositoryMySQL {
                 .execute(self.connection.as_ref())
                 .await;
                 match update_result {
-                    Ok(result) => match self.find_by_id(book.id.unwrap()).await {
+                    Ok(_) => match self.find_by_id(book.id.unwrap()).await {
                         Ok(book_option) => match book_option {
                             Some(book) => Ok(Some(book)),
                             None => Ok(None),
@@ -327,21 +329,28 @@ impl BookRepository for BookRepositoryMySQL {
         }
     }
 
-    async fn delete_by_id(&self, id: u64) -> Result<(), sqlx::Error> {
+    async fn delete_by_id(&self, user_id: u64, book_id: u64) -> Result<bool, sqlx::Error> {
         let query_result = sqlx::query!(
             r#"
             DELETE
             FROM books u
-            WHERE u.id = ?
+            WHERE u.id = ? and u.user_id = ?
             "#,
-            id,
+            book_id,
+            user_id
         )
         .execute(self.connection.as_ref())
         .await;
         match query_result {
-            Ok(_result) => Ok(()),
+            Ok(deleted_result) => {
+                if deleted_result.rows_affected() > 0 {
+                    Ok(true)
+                } else {
+                    Ok(false)
+                }
+            }
             Err(error) => match error {
-                sqlx::Error::RowNotFound => Ok(()),
+                sqlx::Error::RowNotFound => Ok(false),
                 _ => Err(error),
             },
         }
