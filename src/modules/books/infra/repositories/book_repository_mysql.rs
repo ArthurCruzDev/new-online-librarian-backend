@@ -29,18 +29,58 @@ impl BookRepositoryMySQL {
 
 impl BookRepository for BookRepositoryMySQL {
     async fn save(&self, book: &Book) -> Result<Option<Book>, sqlx::Error> {
+        let mut genres_string = String::new();
+
+        match &book.genres {
+            Some(book_genres) => genres_string = serde_json::to_string(&book_genres).unwrap(),
+            None => {}
+        }
         match book.id {
-            Some(_) => todo!(),
-            None => {
-                let mut genres_string = String::new();
-
-                match &book.genres {
-                    Some(book_genres) => {
-                        genres_string = serde_json::to_string(&book_genres).unwrap()
-                    }
-                    None => {}
+            Some(_) => {
+                let update_result = sqlx::query!(
+                    r#"
+                    UPDATE books SET
+                        title = ?, 
+                        authors = ?, 
+                        publisher = ?, 
+                        languages = ?, 
+                        edition = ?, 
+                        isbn = ?, 
+                        year = ?, 
+                        genres = ?, 
+                        cover = ?, 
+                        collection_id = ?, 
+                        location_id = ?
+                    WHERE id = ? AND user_id = ?
+                    "#,
+                    book.title,
+                    serde_json::to_string(&book.authors).unwrap(),
+                    book.publisher,
+                    serde_json::to_string(&book.languages).unwrap(),
+                    book.edition,
+                    book.isbn,
+                    book.year,
+                    genres_string,
+                    book.cover,
+                    book.collection_id,
+                    book.location_id,
+                    book.id,
+                    book.user_id
+                )
+                .execute(self.connection.as_ref())
+                .await;
+                match update_result {
+                    Ok(result) => match self.find_by_id(book.id.unwrap()).await {
+                        Ok(book_option) => match book_option {
+                            Some(book) => Ok(Some(book)),
+                            None => Ok(None),
+                        },
+                        Err(error) => Err(error),
+                    },
+                    Err(e) => Err(e),
                 }
-
+            }
+            None => {
                 let insert_result = sqlx::query!(
                     r#"
                     INSERT INTO books (

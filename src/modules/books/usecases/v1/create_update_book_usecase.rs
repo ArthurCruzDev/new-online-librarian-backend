@@ -20,7 +20,7 @@ use crate::modules::{
     shared::errors::{simple_api_error::SimpleAPIError, APIError},
 };
 
-pub struct CreateBookUseCaseV1<T, U, V>
+pub struct CreateUpdateBookUseCaseV1<T, U, V>
 where
     T: BookRepository,
     U: CollectionRepository,
@@ -31,7 +31,13 @@ where
     location_repository: Arc<V>,
 }
 
-impl CreateBookUseCaseV1<BookRepositoryMySQL, CollectionRepositoryMySQL, LocationRepositoryMySQL> {
+impl
+    CreateUpdateBookUseCaseV1<
+        BookRepositoryMySQL,
+        CollectionRepositoryMySQL,
+        LocationRepositoryMySQL,
+    >
+{
     pub fn new(
         book_repository: BookRepositoryMySQL,
         collection_repository: CollectionRepositoryMySQL,
@@ -44,18 +50,23 @@ impl CreateBookUseCaseV1<BookRepositoryMySQL, CollectionRepositoryMySQL, Locatio
         }
     }
 
-    pub async fn create_book(&self, book_to_be_created: Book) -> Result<CompleteBookDto, APIError> {
+    pub async fn create_update_book(
+        &self,
+        book_to_be_created: Book,
+    ) -> Result<CompleteBookDto, APIError> {
         match self
             .book_repository
             .find_by_title(&book_to_be_created.title)
             .await
         {
-            Ok(duplicated_book_name) => {
-                if duplicated_book_name.is_some() {
-                    return Err(APIError::SimpleAPIError(SimpleAPIError::new(
-                        "There is already an book with the given name".to_string(),
-                        409,
-                    )));
+            Ok(duplicated_book) => {
+                if let Some(duplicated_book) = duplicated_book {
+                    if duplicated_book.id != book_to_be_created.id {
+                        return Err(APIError::SimpleAPIError(SimpleAPIError::new(
+                            "There is already an book with the given name".to_string(),
+                            409,
+                        )));
+                    }
                 }
             }
             Err(error) => {
@@ -116,7 +127,7 @@ impl CreateBookUseCaseV1<BookRepositoryMySQL, CollectionRepositoryMySQL, Locatio
                 Some(returned_book) => saved_book = returned_book,
                 None => {
                     return Err(APIError::SimpleAPIError(SimpleAPIError::new(
-                        "Failed to load created book info".to_string(),
+                        "Failed to load book info".to_string(),
                         500,
                     )))
                 }
@@ -170,7 +181,7 @@ impl CreateBookUseCaseV1<BookRepositoryMySQL, CollectionRepositoryMySQL, Locatio
                 Some(found_location) => dto.location = LocationDto::from(found_location),
                 None => {
                     return Err(APIError::SimpleAPIError(SimpleAPIError::new(
-                        "Created book location not found".to_string(),
+                        "Book location not found".to_string(),
                         404,
                     )))
                 }
