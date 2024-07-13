@@ -32,22 +32,21 @@ impl FindBookByIDUseCaseV1<BookRepositoryMySQL> {
         user_id: u64,
         book_id: u64,
     ) -> Result<CompleteBookDto, APIError> {
-
         match self
             .book_repository
-            .find_by_id(book_id)
+            .find_by_id_as_complete_book_dto(user_id, book_id)
             .await
         {
             Ok(found_book) => {
-                if found_book.is_some(){
-                    Ok(found_book.unwrap())
-                }else{
+                if let Some(found_book) = found_book {
+                    Ok(found_book)
+                } else {
                     Err(APIError::SimpleAPIError(SimpleAPIError {
                         msg: "Book not found".to_string(),
                         code: 404,
                     }))
                 }
-            },
+            }
             Err(e) => Err(APIError::SimpleAPIError(SimpleAPIError {
                 msg: e.to_string(),
                 code: 500,

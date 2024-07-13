@@ -62,7 +62,7 @@ impl FindAllBooksFromUserUseCaseV1<BookRepositoryMySQL> {
 
         match self
             .book_repository
-            .find_all_by_user_id(user_id, converted_page, converted_page_size)
+            .find_all_by_user_id_as_complete_book_dto(user_id, converted_page, converted_page_size)
             .await
         {
             Ok(found_books) => Ok(found_books),

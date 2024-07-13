@@ -172,7 +172,7 @@ impl BookRepository for BookRepositoryMySQL {
         }
     }
 
-    async fn find_all_by_user_id(
+    async fn find_all_by_user_id_as_complete_book_dto(
         &self,
         user_id: u64,
         page: u64,
@@ -302,6 +302,89 @@ impl BookRepository for BookRepositoryMySQL {
             Ok(_result) => Ok(()),
             Err(error) => match error {
                 sqlx::Error::RowNotFound => Ok(()),
+                _ => Err(error),
+            },
+        }
+    }
+
+    async fn find_by_id_as_complete_book_dto(
+        &self,
+        user_id: u64,
+        book_id: u64,
+    ) -> Result<Option<CompleteBookDto>, sqlx::Error> {
+        let query_result = sqlx::query!(
+            r#"
+            SELECT 
+            b.id 'book_id',
+            b.title 'book_title',
+            b.authors 'book_authors',
+            b.publisher 'book_publisher',
+            b.languages 'book_languages',
+            b.edition 'book_edition',
+            b.isbn 'book_isbn',
+            b.year 'book_year',
+            b.genres 'book_genres',
+            b.cover 'book_cover',
+            b.user_id 'book_user_id',
+            l.id 'location_id',
+            l.name 'location_name',
+            l.user_id 'location_user_id',
+            c.id 'collection_id',
+            c.name 'collection_name',
+            c.user_id 'collection_user_id'
+            FROM books b
+            INNER JOIN locations as l
+                ON l.id = b.location_id
+            LEFT JOIN collections as c
+                ON c.id = b.collection_id
+            WHERE 
+                b.user_id = ?
+                AND b.id = ?
+            "#,
+            user_id,
+            book_id
+        )
+        .fetch_one(self.connection.as_ref())
+        .await;
+        match query_result {
+            Ok(result) => {
+                let mut genres: Option<Vec<GenreDto>> = None;
+                if let Some(genre_value) = result.book_genres {
+                    let genre_vec: Vec<Genre> = serde_json::from_value(genre_value).unwrap();
+                    let genre_dto_vec: Vec<GenreDto> =
+                        genre_vec.into_iter().map(GenreDto::from).collect();
+                    genres = Some(genre_dto_vec);
+                }
+                let mut collection: Option<CollectionDto> = None;
+                if result.collection_id.is_some() {
+                    collection = Some(CollectionDto {
+                        id: result.collection_id,
+                        name: result.collection_name.unwrap_or("".to_string()),
+                        user_id: result.collection_user_id.unwrap(),
+                    })
+                }
+                Ok(Some(CompleteBookDto {
+                    id: result.book_id,
+                    title: result.book_title,
+                    authors: serde_json::from_value(result.book_authors).unwrap(),
+                    publisher: result.book_publisher,
+                    languages: serde_json::from_value(result.book_languages).unwrap(),
+                    edition: result.book_edition,
+                    isbn: result.book_isbn,
+                    year: result.book_year,
+                    genres,
+                    cover: result.book_cover,
+                    collection,
+                    location: LocationDto {
+                        id: Some(result.location_id),
+                        name: result.location_name,
+                        user_id: result.location_user_id,
+                    },
+                    user_id: result.book_user_id,
+                }))
+            }
+            Err(error) => match error {
+                sqlx::Error::RowNotFound => Ok(None),
                 _ => Err(error),
             },
         }
