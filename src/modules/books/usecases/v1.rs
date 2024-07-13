@@ -6,3 +6,4 @@ pub mod delete_location_usecase;
 pub mod find_all_books_from_user_usecase;
 pub mod find_all_collection_from_user_usecase;
 pub mod find_all_location_from_user_usecase;
+pub mod find_book_by_id_usecase;
