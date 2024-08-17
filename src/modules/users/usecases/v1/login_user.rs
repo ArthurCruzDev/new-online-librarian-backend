@@ -88,6 +88,7 @@ impl LoginUserUseCaseV1<UserRepositoryMySQL> {
                 let claims_dto = ClaimsDto {
                     id: user_id,
                     exp: expiration_time.timestamp(),
+                    user_name: user_from_db.name,
                 };
 
                 let generated_token = match encode(
@@ -109,7 +110,6 @@ impl LoginUserUseCaseV1<UserRepositoryMySQL> {
                     token_type: "Bearer".to_string(),
                     expires_in: expiration_time.timestamp(),
                     scope: None,
-                    user_name: user_from_db.name,
                 })
             }
             Err(error) => {

@@ -4,4 +4,5 @@ use serde::{Deserialize, Serialize};
 pub struct ClaimsDto {
     pub id: u64,
     pub exp: i64,
+    pub user_name: String,
 }

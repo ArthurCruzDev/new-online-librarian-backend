@@ -6,5 +6,4 @@ pub struct TokenUserDto {
     pub token_type: String,
     pub expires_in: i64,
     pub scope: Option<String>,
-    pub user_name: String,
 }
