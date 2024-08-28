@@ -36,7 +36,7 @@ impl CreateLocationUseCaseV1<LocationRepositoryMySQL> {
             Ok(duplicated_location_name) => {
                 if duplicated_location_name.is_some() {
                     return Err(APIError::SimpleAPIError(SimpleAPIError::new(
-                        "There is already an location with the given name".to_string(),
+                        "Já existe uma localização com esse nome.".to_string(),
                         409,
                     )));
                 }
