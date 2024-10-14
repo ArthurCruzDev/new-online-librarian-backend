@@ -37,7 +37,8 @@ impl FromRequest for AuthedUser {
             }
         };
 
-        let validation = Validation::new(jsonwebtoken::Algorithm::HS256);
+        let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);
+        validation.validate_exp = true;
 
         let token_id = match decode::<ClaimsDto>(
             token.as_str(),
