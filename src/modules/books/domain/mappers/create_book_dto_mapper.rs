@@ -89,7 +89,24 @@ impl TryFrom<CreateBookDto> for Book {
                 );
             }
         }
-
+        match dto.publisher {
+            Some(publisher) => {
+                let candidate_publisher = publisher.trim();
+                if candidate_publisher.is_empty() {
+                    validations.insert(
+                        "publisher".to_string(),
+                        "O campo editora não pode ser vazio".to_string(),
+                    );
+                }
+                book.publisher = candidate_publisher.to_string()
+            }
+            None => {
+                validations.insert(
+                    "publisher".to_string(),
+                    "A editora deve ser informada".to_string(),
+                );
+            }
+        }
         book.edition = dto.edition;
         book.isbn = dto.isbn;
         book.year = dto.year;
@@ -127,7 +144,7 @@ impl TryFrom<CreateBookDto> for Book {
             None => {
                 validations.insert(
                     "location_id".to_string(),
-                    "Book must be at a location".to_string(),
+                    "O livro deve estar em alguma localização".to_string(),
                 );
             }
         }
@@ -144,7 +161,7 @@ impl TryFrom<CreateBookDto> for Book {
 
         if !validations.is_empty() {
             return Err(DetailedAPIError {
-                msg: "Request contains invalid data".to_string(),
+                msg: "Livro contém informações inválidas".to_string(),
                 code: 400,
                 field_validations: Some(validations),
             });
