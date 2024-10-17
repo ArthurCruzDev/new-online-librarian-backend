@@ -5,6 +5,7 @@ use crate::modules::{
     },
     shared::errors::detailed_api_error::DetailedAPIError,
 };
+use base64::prelude::*;
 use std::collections::HashMap;
 
 impl TryFrom<CreateBookDto> for Book {
@@ -136,7 +137,28 @@ impl TryFrom<CreateBookDto> for Book {
             }
         }
 
-        book.cover = dto.cover;
+        match dto.cover {
+            None => {
+                book.cover = None;
+            }
+            Some(cover_to_be) => {
+                if cover_to_be.starts_with("http://") || cover_to_be.starts_with("https://") {
+                    book.cover = Some(cover_to_be)
+                } else {
+                    match BASE64_STANDARD.decode(cover_to_be) {
+                        Ok(_decoded_image) => {
+                            //TODO upload to S3 or something
+                        }
+                        Err(_error) => {
+                            validations.insert(
+                                "cover".to_string(),
+                                "A capa do livro contém uma imagem inválida".to_string(),
+                            );
+                        }
+                    }
+                }
+            }
+        }
         book.collection_id = dto.collection_id;
 
         match dto.location_id {

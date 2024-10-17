@@ -1421,6 +1421,7 @@ dependencies = [
  "actix-web",
  "anyhow",
  "argon2",
+ "base64 0.21.7",
  "chrono",
  "config",
  "email_address",
