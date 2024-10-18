@@ -132,6 +132,9 @@ async fn update_book(
 pub struct GetAllBooksParams {
     page: Option<i64>,
     page_size: Option<i64>,
+    collection_id: Option<i64>,
+    location_id: Option<i64>,
+    query: Option<String>,
 }
 
 #[get("")]
@@ -149,7 +152,14 @@ async fn get_all_books_paginated(
 
     match book_controller
         .get_all_books_from_user_usecase
-        .find_all_from_user(authed_user.id.unwrap(), params.page, params.page_size)
+        .find_all_from_user(
+            authed_user.id.unwrap(),
+            params.page,
+            params.page_size,
+            params.collection_id,
+            params.location_id,
+            params.query.clone(),
+        )
         .await
     {
         Ok(books_page) => HttpResponse::Ok().json(web::Json(books_page)),

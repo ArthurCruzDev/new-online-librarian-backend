@@ -1,6 +1,7 @@
-use sqlx::MySqlPool;
-use std::sync::Arc;
-use tracing_log::log::info;
+use serde_json::Value;
+use sqlx::{types::Json, MySqlPool, Row};
+use std::{str::FromStr, sync::Arc};
+use tracing::info;
 
 use crate::modules::{
     books::domain::{
@@ -28,6 +29,18 @@ impl BookRepositoryMySQL {
         }
     }
 }
+
+const COLLECTION_ID_CONDITIONAL: &str = "AND u.collection_id = ? \n";
+const LOCATION_ID_CONDITIONAL: &str = "AND u.location_id = ? \n";
+const QUERY_CONDTIONAL: &str = r#"
+    AND (
+            lower(u.title) LIKE CONCAT('%', ?, '%') 
+        OR 	lower(u.authors->'$[*].name') LIKE CONCAT('%', ?, '%')
+        OR	lower(u.publisher) LIKE CONCAT('%', ?, '%')
+        OR	lower(u.isbn) LIKE CONCAT('%', ?, '%')
+        OR 	lower(u.genres->'$[*].name') LIKE CONCAT('%', ?, '%')
+    )
+"#;
 
 impl BookRepository for BookRepositoryMySQL {
     async fn save(&self, book: &Book) -> Result<Option<Book>, sqlx::Error> {
@@ -219,27 +232,74 @@ impl BookRepository for BookRepositoryMySQL {
         user_id: u64,
         page: u64,
         page_size: u64,
+        collection_id: Option<i64>,
+        location_id: Option<i64>,
+        query: Option<String>,
     ) -> Result<PaginatedDto<CompleteBookDto>, sqlx::Error> {
-        let couting_query_result = sqlx::query!(
+        let query_hook = match query {
+            Some(_) => QUERY_CONDTIONAL,
+            None => "",
+        };
+        let collection_id_hook = match collection_id {
+            Some(_) => COLLECTION_ID_CONDITIONAL,
+            None => "",
+        };
+        let location_id_hook = match location_id {
+            Some(_) => LOCATION_ID_CONDITIONAL,
+            None => "",
+        };
+
+        let mut count_query = r#"
+        SELECT COUNT(*) as n_books
+            FROM books b
+                INNER JOIN ( 
+                    SELECT u.id
+                        FROM books u
+                        WHERE u.user_id = ?
+                                "#
+        .to_string();
+        count_query.push_str(query_hook);
+        count_query.push_str(location_id_hook);
+        count_query.push_str(collection_id_hook);
+        count_query.push_str(
             r#"
-            SELECT COUNT(*) as n_books
-            FROM books u
-            WHERE u.user_id = ?
-            "#,
-            user_id,
-        )
-        .fetch_one(self.connection.as_ref())
-        .await;
+                ) as p USING (id)
+                    INNER JOIN locations as l
+                        ON l.id = b.location_id
+                    LEFT JOIN collections as c
+                        ON c.id = b.collection_id
+        "#,
+        );
+
+        let mut count_query_ps = sqlx::query(&count_query).bind(user_id);
+        if query.is_some() {
+            let lowercase_query = query.clone().unwrap().to_lowercase();
+            count_query_ps = count_query_ps
+                .bind(lowercase_query.clone())
+                .bind(lowercase_query.clone())
+                .bind(lowercase_query.clone())
+                .bind(lowercase_query.clone())
+                .bind(lowercase_query.clone());
+        }
+        if location_id.is_some() {
+            count_query_ps = count_query_ps.bind(location_id.unwrap());
+        }
+        if collection_id.is_some() {
+            count_query_ps = count_query_ps.bind(collection_id.unwrap());
+        }
+
+        let couting_query_result = count_query_ps.fetch_one(self.connection.as_ref()).await;
         let n_of_books: u64 = match couting_query_result {
             Ok(counting_query_result_value) => {
-                u64::from_ne_bytes(counting_query_result_value.n_books.to_ne_bytes())
+                let n_books: i64 = counting_query_result_value.get(0);
+                info!("{} books returned", n_books);
+                u64::from_ne_bytes(n_books.to_ne_bytes())
             }
             Err(e) => return Err(e),
         };
 
-        let query_result = sqlx::query!(
-            r#"
-            SELECT 
+        let mut main_query = r#"
+        SELECT 
             b.id 'book_id',
             b.title 'book_title',
             b.authors 'book_authors',
@@ -262,27 +322,52 @@ impl BookRepository for BookRepositoryMySQL {
                     SELECT u.id
                         FROM books u
                         WHERE u.user_id = ?
-                        ORDER BY u.title ASC
+                                "#
+        .to_string();
+        main_query.push_str(query_hook);
+        main_query.push_str(location_id_hook);
+        main_query.push_str(collection_id_hook);
+        main_query.push_str(
+            r#"
+                ORDER BY u.title ASC
                         LIMIT ? OFFSET ?
                 ) as p USING (id)
             INNER JOIN locations as l
                 ON l.id = b.location_id
             LEFT JOIN collections as c
                 ON c.id = b.collection_id
-            "#,
-            user_id,
-            page_size,
-            (page - 1) * page_size
-        )
-        .fetch_all(self.connection.as_ref())
-        .await;
+
+        "#,
+        );
+
+        let mut query_ps = sqlx::query(&main_query).bind(user_id);
+
+        if query.is_some() {
+            let lowercase_query = query.clone().unwrap().to_lowercase();
+            query_ps = query_ps
+                .bind(lowercase_query.clone())
+                .bind(lowercase_query.clone())
+                .bind(lowercase_query.clone())
+                .bind(lowercase_query.clone())
+                .bind(lowercase_query.clone());
+        }
+        if location_id.is_some() {
+            query_ps = query_ps.bind(location_id.unwrap());
+        }
+        if collection_id.is_some() {
+            query_ps = query_ps.bind(collection_id.unwrap());
+        }
+        query_ps = query_ps.bind(page_size).bind((page - 1) * page_size);
+
+        let query_result = query_ps.fetch_all(self.connection.as_ref()).await;
         match query_result {
             Ok(result) => {
                 let items_vec = result
                     .into_iter()
                     .map(|item| {
                         let mut genres: Option<Vec<GenreDto>> = None;
-                        if let Some(genre_value) = item.book_genres {
+                        let book_genre: Option<Value> = item.get(8);
+                        if let Some(genre_value) = book_genre {
                             let genre_vec: Vec<Genre> =
                                 serde_json::from_value(genre_value).unwrap();
                             let genre_dto_vec: Vec<GenreDto> =
@@ -290,31 +375,34 @@ impl BookRepository for BookRepositoryMySQL {
                             genres = Some(genre_dto_vec);
                         }
                         let mut collection: Option<CollectionDto> = None;
-                        if item.collection_id.is_some() {
+                        let book_collection_id: Option<u64> = item.get(14);
+                        if book_collection_id.is_some() {
                             collection = Some(CollectionDto {
-                                id: item.collection_id,
-                                name: item.collection_name.unwrap_or("".to_string()),
-                                user_id: item.collection_user_id.unwrap(),
+                                id: item.get(14),
+                                name: item
+                                    .get::<Option<String>, usize>(15)
+                                    .unwrap_or("".to_string()),
+                                user_id: item.get::<Option<u64>, usize>(16).unwrap(),
                             })
                         }
                         CompleteBookDto {
-                            id: item.book_id,
-                            title: item.book_title,
-                            authors: serde_json::from_value(item.book_authors).unwrap(),
-                            publisher: item.book_publisher,
-                            languages: serde_json::from_value(item.book_languages).unwrap(),
-                            edition: item.book_edition,
-                            isbn: item.book_isbn,
-                            year: item.book_year,
+                            id: item.get(0),
+                            title: item.get(1),
+                            authors: serde_json::from_value(item.get(2)).unwrap(),
+                            publisher: item.get(3),
+                            languages: serde_json::from_value(item.get(4)).unwrap(),
+                            edition: item.get(5),
+                            isbn: item.get(6),
+                            year: item.get(7),
                             genres,
-                            cover: item.book_cover,
+                            cover: item.get(9),
                             collection,
                             location: LocationDto {
-                                id: Some(item.location_id),
-                                name: item.location_name,
-                                user_id: item.location_user_id,
+                                id: Some(item.get(11)),
+                                name: item.get(12),
+                                user_id: item.get(13),
                             },
-                            user_id: item.book_user_id,
+                            user_id: item.get(10),
                         }
                     })
                     .collect();

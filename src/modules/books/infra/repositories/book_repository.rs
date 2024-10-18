@@ -18,6 +18,9 @@ pub trait BookRepository {
         user_id: u64,
         page: u64,
         page_size: u64,
+        collection_id: Option<i64>,
+        location_id: Option<i64>,
+        query: Option<String>,
     ) -> impl Future<Output = Result<PaginatedDto<CompleteBookDto>, Error>> + Send;
     fn find_by_id_as_complete_book_dto(
         &self,

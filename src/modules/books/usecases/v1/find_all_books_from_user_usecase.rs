@@ -32,6 +32,9 @@ impl FindAllBooksFromUserUseCaseV1<BookRepositoryMySQL> {
         user_id: u64,
         page: Option<i64>,
         page_size: Option<i64>,
+        collection_id: Option<i64>,
+        location_id: Option<i64>,
+        query: Option<String>,
     ) -> Result<PaginatedDto<CompleteBookDto>, APIError> {
         let converted_page: u64;
         if page.is_some() {
@@ -62,7 +65,14 @@ impl FindAllBooksFromUserUseCaseV1<BookRepositoryMySQL> {
 
         match self
             .book_repository
-            .find_all_by_user_id_as_complete_book_dto(user_id, converted_page, converted_page_size)
+            .find_all_by_user_id_as_complete_book_dto(
+                user_id,
+                converted_page,
+                converted_page_size,
+                collection_id,
+                location_id,
+                query.clone(),
+            )
             .await
         {
             Ok(found_books) => Ok(found_books),
