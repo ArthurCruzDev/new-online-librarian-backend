@@ -37,7 +37,7 @@ const QUERY_CONDTIONAL: &str = r#"
             lower(u.title) LIKE CONCAT('%', ?, '%') 
         OR 	lower(u.authors->'$[*].name') LIKE CONCAT('%', ?, '%')
         OR	lower(u.publisher) LIKE CONCAT('%', ?, '%')
-        OR	lower(u.isbn) LIKE CONCAT('%', ?, '%')
+        OR	lower(u.isbn) LIKE CONCAT( ? , '%')
         OR 	lower(u.genres->'$[*].name') LIKE CONCAT('%', ?, '%')
     )
 "#;
