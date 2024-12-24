@@ -21,7 +21,7 @@ impl TryFrom<CreateBookDto> for Book {
                 if candidate_title.is_empty() {
                     validations.insert(
                         "title".to_string(),
-                        "Book title must not be empty".to_string(),
+                        "O título do livro não pode estar vazio".to_string(),
                     );
                 }
                 book.title = candidate_title.to_string()
@@ -29,7 +29,7 @@ impl TryFrom<CreateBookDto> for Book {
             None => {
                 validations.insert(
                     "title".to_string(),
-                    "Book title must be informed".to_string(),
+                    "O título do livro deve ser informado".to_string(),
                 );
             }
         }
@@ -39,7 +39,7 @@ impl TryFrom<CreateBookDto> for Book {
                 if authors.is_empty() {
                     validations.insert(
                         "authors".to_string(),
-                        "At least one author must be informed".to_string(),
+                        "Pelo menos um autor deve ser informado".to_string(),
                     );
                 } else {
                     let mut authors_entity: Vec<Author> = Vec::with_capacity(authors.capacity());
@@ -57,7 +57,7 @@ impl TryFrom<CreateBookDto> for Book {
             None => {
                 validations.insert(
                     "authors".to_string(),
-                    "Book authors must be informed".to_string(),
+                    "Os autores do livro devem ser informados".to_string(),
                 );
             }
         }
@@ -67,7 +67,7 @@ impl TryFrom<CreateBookDto> for Book {
                 if languages.is_empty() {
                     validations.insert(
                         "languages".to_string(),
-                        "At least one language must be informed".to_string(),
+                        "Pelo menos um idioma deve ser informado".to_string(),
                     );
                 } else {
                     let mut languages_entity: Vec<Language> =
@@ -86,7 +86,7 @@ impl TryFrom<CreateBookDto> for Book {
             None => {
                 validations.insert(
                     "languages".to_string(),
-                    "Book languages must be informed".to_string(),
+                    "Os idiomas do livro devem ser informados".to_string(),
                 );
             }
         }
@@ -117,7 +117,7 @@ impl TryFrom<CreateBookDto> for Book {
                 if genres.is_empty() {
                     validations.insert(
                         "genres".to_string(),
-                        "At least one genre must be informed".to_string(),
+                        "Pelo menos um gênero deve ser informado".to_string(),
                     );
                 } else {
                     let mut genres_entity: Vec<Genre> = Vec::with_capacity(genres.capacity());
@@ -176,7 +176,7 @@ impl TryFrom<CreateBookDto> for Book {
             None => {
                 validations.insert(
                     "user_id".to_string(),
-                    "Book must be related to an user".to_string(),
+                    "O livro deve pertencer a um usuãrio".to_string(),
                 );
             }
         }

@@ -86,7 +86,7 @@ impl
                 if let Some(duplicated_book) = duplicated_book {
                     if duplicated_book.id != book_to_be_created.id {
                         return Err(APIError::SimpleAPIError(SimpleAPIError::new(
-                            "There is already an book with the given name".to_string(),
+                            "Já existe um livro com o mesmo nome".to_string(),
                             409,
                         )));
                     }

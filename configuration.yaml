@@ -7,4 +7,4 @@ database:
   database_name: newonlinelibrarian
 token:
   secret: test_secret_no_problem_sharing
-  expiration_time: 86400
+  expiration_time: 604800

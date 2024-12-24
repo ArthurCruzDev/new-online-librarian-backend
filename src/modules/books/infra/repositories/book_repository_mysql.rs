@@ -1,6 +1,6 @@
 use serde_json::Value;
-use sqlx::{types::Json, MySqlPool, Row};
-use std::{str::FromStr, sync::Arc};
+use sqlx::{MySqlPool, Row};
+use std::sync::Arc;
 use tracing::info;
 
 use crate::modules::{
@@ -12,7 +12,6 @@ use crate::modules::{
         entities::{book::Book, genre::Genre},
     },
     shared::domain::dtos::paginated_dto::PaginatedDto,
-    users::domain::entities::user,
 };
 
 use super::book_repository::BookRepository;
