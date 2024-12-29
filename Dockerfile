@@ -30,7 +30,7 @@ RUN apt-get update -y \
     && rm -rf /var/lib/apt/lists/*
 
 # copy the build artifact from the build stage
-COPY --from=builder /app/target/release/onlinelibrarian-backend onlinelibrarian-backend
+COPY --from=builder /app/target/release/new-online-librarian-backend new-online-librarian-backend
 
 # copy configurations
 COPY configuration.yaml configuration.yaml
@@ -39,4 +39,4 @@ COPY configuration.yaml configuration.yaml
 ENV APP_ENVIRONMENT=production
 
 # set the startup command to run your binary
-CMD ["./onlinelibrarian-backend"]
+CMD ["./new-online-librarian-backend"]
