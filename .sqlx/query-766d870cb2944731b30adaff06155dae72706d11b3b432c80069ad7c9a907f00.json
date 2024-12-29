@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "\n            DELETE\n            FROM locations u\n            WHERE u.id = ?\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "766d870cb2944731b30adaff06155dae72706d11b3b432c80069ad7c9a907f00"
+}
