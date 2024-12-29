@@ -3,9 +3,9 @@ CREATE TABLE users(
     email VARCHAR(300) NOT NULL UNIQUE,
     password VARCHAR(200) NOT NULL,
     email_token VARCHAR(300),
-    name VARCHAR(300) NOT NULl,
+    name VARCHAR(300) NOT NULL,
     profile_picture VARCHAR(500),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     active BOOLEAN NOT NULL DEFAULT FALSE
 );
 

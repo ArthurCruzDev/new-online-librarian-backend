@@ -1,0 +1,201 @@
+{
+  "db_name": "MySQL",
+  "query": "\n            SELECT \n            b.id 'book_id',\n            b.title 'book_title',\n            b.authors 'book_authors',\n            b.publisher 'book_publisher',\n            b.languages 'book_languages',\n            b.edition 'book_edition',\n            b.isbn 'book_isbn',\n            b.year 'book_year',\n            b.genres 'book_genres',\n            b.cover 'book_cover',\n            b.user_id 'book_user_id',\n            l.id 'location_id',\n            l.name 'location_name',\n            l.user_id 'location_user_id',\n            c.id 'collection_id',\n            c.name 'collection_name',\n            c.user_id 'collection_user_id'\n            FROM books b\n            INNER JOIN locations as l\n                ON l.id = b.location_id\n            LEFT JOIN collections as c\n                ON c.id = b.collection_id\n            WHERE \n                b.user_id = ?\n                AND b.id = ?\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "book_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "char_set": 63,
+          "max_size": 20
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "book_title",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "char_set": 224,
+          "max_size": 2000
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "book_authors",
+        "type_info": {
+          "type": "Json",
+          "flags": "NOT_NULL | BLOB | BINARY | NO_DEFAULT_VALUE",
+          "char_set": 63,
+          "max_size": 4294967295
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "book_publisher",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "char_set": 224,
+          "max_size": 2000
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "book_languages",
+        "type_info": {
+          "type": "Json",
+          "flags": "NOT_NULL | BLOB | BINARY | NO_DEFAULT_VALUE",
+          "char_set": 63,
+          "max_size": 4294967295
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "book_edition",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "char_set": 224,
+          "max_size": 200
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "book_isbn",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "char_set": 224,
+          "max_size": 52
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "book_year",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "char_set": 224,
+          "max_size": 16
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "book_genres",
+        "type_info": {
+          "type": "Json",
+          "flags": "BLOB | BINARY",
+          "char_set": 63,
+          "max_size": 4294967295
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "book_cover",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "char_set": 224,
+          "max_size": 2000
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "book_user_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "char_set": 63,
+          "max_size": 20
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "location_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "char_set": 63,
+          "max_size": 20
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "location_name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | MULTIPLE_KEY | NO_DEFAULT_VALUE",
+          "char_set": 224,
+          "max_size": 1200
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "location_user_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "char_set": 63,
+          "max_size": 20
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "collection_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "char_set": 63,
+          "max_size": 20
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "collection_name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "MULTIPLE_KEY | NO_DEFAULT_VALUE",
+          "char_set": 224,
+          "max_size": 1200
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "collection_user_id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "MULTIPLE_KEY | UNSIGNED | NO_DEFAULT_VALUE",
+          "char_set": 63,
+          "max_size": 20
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "79a5dd0e2e60189e0054c62fb66926cd8cb3cfd69dbd94582648f02443ecd0d6"
+}

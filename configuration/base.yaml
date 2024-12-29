@@ -1,0 +1,11 @@
+application: 
+  port: 8000
+database:
+  host: "localhost"
+  port: 3306
+  username: root
+  password: mysql
+  database_name: newonlinelibrarian
+token:
+  secret: test_secret_no_problem_sharing
+  expiration_time: 604800
