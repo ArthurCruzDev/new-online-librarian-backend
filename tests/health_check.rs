@@ -5,7 +5,7 @@ use new_online_librarian_backend::{
 };
 use once_cell::sync::Lazy;
 use secrecy::ExposeSecret;
-use sqlx::MySqlPool;
+use sqlx::{mysql::MySqlPoolOptions, MySqlPool};
 use std::net::TcpListener;
 
 // Ensure that the `tracing` stack is only initialised once using `once_cell`
@@ -32,10 +32,9 @@ async fn spawn_app() -> TestApp {
     let port = listener.local_addr().unwrap().port();
     let address = format!("http://127.0.0.1:{}", port);
     let configuration = get_configuration().expect("Failed to read configuration.");
-    let connection_pool =
-        MySqlPool::connect(configuration.database.connection_string().expose_secret())
-            .await
-            .expect("Failed to connect to MySql");
+    let connection_pool = MySqlPoolOptions::new()
+        .acquire_timeout(std::time::Duration::from_secs(2))
+        .connect_lazy_with(configuration.database.connection_options());
 
     let server = run(listener, connection_pool.clone(), configuration.token)
         .expect("Failed to bind address");

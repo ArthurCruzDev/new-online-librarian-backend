@@ -33,7 +33,7 @@ RUN apt-get update -y \
 COPY --from=builder /app/target/release/new-online-librarian-backend new-online-librarian-backend
 
 # copy configurations
-COPY configuration.yaml configuration.yaml
+COPY configuration configuration
 
 #ENVS
 ENV APP_ENVIRONMENT=production

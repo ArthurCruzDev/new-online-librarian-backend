@@ -3,8 +3,7 @@ use std::net::TcpListener;
 use new_online_librarian_backend::configuration::get_configuration;
 use new_online_librarian_backend::startup::run;
 use new_online_librarian_backend::telemetry::{get_subscriber, init_subscriber};
-use secrecy::ExposeSecret;
-use sqlx::MySqlPool;
+use sqlx::mysql::MySqlPoolOptions;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -12,10 +11,9 @@ async fn main() -> Result<(), std::io::Error> {
     init_subscriber(subscriber);
 
     let configuration = get_configuration().expect("Failed to read configuration.");
-    let connection_pool =
-        MySqlPool::connect_lazy(configuration.database.connection_string().expose_secret())
-            .await
-            .expect("Failed to connect to MySQL");
+    let connection_pool = MySqlPoolOptions::new()
+        .acquire_timeout(std::time::Duration::from_secs(2))
+        .connect_lazy_with(configuration.database.connection_options());
 
     let address = format!(
         "{}:{}",

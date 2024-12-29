@@ -1,5 +1,6 @@
 use secrecy::{ExposeSecret, Secret};
 use serde_aux::field_attributes::deserialize_number_from_string;
+use sqlx::mysql::{MySqlConnectOptions, MySqlSslMode};
 
 #[derive(serde::Deserialize)]
 pub struct Settings {
@@ -27,17 +28,22 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
+    pub require_ssl: bool,
 }
 impl DatabaseSettings {
-    pub fn connection_string(&self) -> Secret<String> {
-        Secret::new(format!(
-            "mysql://{}:{}@{}:{}/{}",
-            self.username,
-            self.password.expose_secret(),
-            self.host,
-            self.port,
-            self.database_name
-        ))
+    pub fn connection_options(&self) -> MySqlConnectOptions {
+        let ssl_mode = if self.require_ssl {
+            MySqlSslMode::Required
+        } else {
+            MySqlSslMode::Preferred
+        };
+        MySqlConnectOptions::new()
+            .host(&self.host)
+            .username(self.password.expose_secret())
+            .password(self.password.expose_secret())
+            .port(self.port)
+            .database(&self.database_name)
+            .ssl_mode(ssl_mode)
     }
 }
 
