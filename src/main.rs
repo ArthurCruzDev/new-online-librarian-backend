@@ -13,11 +13,14 @@ async fn main() -> Result<(), std::io::Error> {
 
     let configuration = get_configuration().expect("Failed to read configuration.");
     let connection_pool =
-        MySqlPool::connect(configuration.database.connection_string().expose_secret())
+        MySqlPool::connect_lazy(configuration.database.connection_string().expose_secret())
             .await
             .expect("Failed to connect to MySQL");
 
-    let address = format!("127.0.0.1:{}", configuration.application_port);
+    let address = format!(
+        "{}:{}",
+        configuration.application.host, configuration.application.port
+    );
     let listener = TcpListener::bind(address)?;
     run(listener, connection_pool, configuration.token)?.await
 }
