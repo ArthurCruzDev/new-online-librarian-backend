@@ -18,7 +18,7 @@ ENV SQLX_OFFLINE=true
 RUN cargo build --release --bin new-online-librarian-backend
 
 # our final base
-FROM debian:bullseye-slim AS runtime
+FROM ubuntu:22.04 AS runtime
 
 WORKDIR /app
 
