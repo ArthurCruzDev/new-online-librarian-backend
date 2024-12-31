@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "\n                    UPDATE books SET\n                        title = ?, \n                        authors = ?, \n                        publisher = ?, \n                        languages = ?, \n                        edition = ?, \n                        isbn = ?, \n                        year = ?, \n                        genres = ?, \n                        cover = ?, \n                        collection_id = ?, \n                        location_id = ?\n                    WHERE id = ? AND user_id = ?\n                    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 13
+    },
+    "nullable": []
+  },
+  "hash": "840a2cac86b6e51ce4868fc93b30e4fe37483cb0f864d906ab592d31ae666e3f"
+}

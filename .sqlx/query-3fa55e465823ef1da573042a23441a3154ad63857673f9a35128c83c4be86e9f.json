@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "\n                    INSERT INTO locations (id, name, user_id)\n                    VALUES (DEFAULT, ?, ?)\n                    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "3fa55e465823ef1da573042a23441a3154ad63857673f9a35128c83c4be86e9f"
+}

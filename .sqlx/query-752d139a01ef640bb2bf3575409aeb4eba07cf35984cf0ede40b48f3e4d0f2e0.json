@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "\n                    INSERT INTO collections (id, name, user_id)\n                    VALUES (DEFAULT, ?, ?)\n                    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "752d139a01ef640bb2bf3575409aeb4eba07cf35984cf0ede40b48f3e4d0f2e0"
+}

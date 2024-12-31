@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "\n            DELETE\n            FROM books u\n            WHERE u.id = ? and u.user_id = ?\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "c1b1c5940c21022f943836b417fc7b37eb33a42dc25ad8f38c15213fe898c800"
+}
