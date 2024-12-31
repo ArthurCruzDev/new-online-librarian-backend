@@ -39,7 +39,7 @@ impl DatabaseSettings {
         };
         MySqlConnectOptions::new()
             .host(&self.host)
-            .username(self.password.expose_secret())
+            .username(self.username.expose_secret())
             .password(self.password.expose_secret())
             .port(self.port)
             .database(&self.database_name)
